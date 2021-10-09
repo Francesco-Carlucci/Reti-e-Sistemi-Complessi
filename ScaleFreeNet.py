@@ -95,8 +95,6 @@ def main():
 
     step = 0.01
     nexp = 10000
-    intentions = np.ndarray.tolist(np.zeros((1, minority)))[0] \
-                 + np.ndarray.tolist(np.ones((1, N - minority)))[0]  # vote intentions
     prob = np.zeros(int(1 / step)+1)  # minority victory probability, vector to be filled
     hvalues = np.arange(0.0, 1+step, step)
 
@@ -108,6 +106,8 @@ def main():
     col=0
 
     for minority in [20, 30, 40]:
+        intentions = np.ndarray.tolist(np.zeros((1, minority)))[0] \
+                     + np.ndarray.tolist(np.ones((1, N - minority)))[0]  # vote intentions
         id=0
         for h in hvalues:
             minwin = 0
