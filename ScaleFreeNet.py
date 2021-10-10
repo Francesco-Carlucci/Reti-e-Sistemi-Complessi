@@ -16,8 +16,8 @@ def powerlawGen2(exp,size):
     p=np.random.random(size)
     x=p**(-1./exp)
     return x
-
-def ScaleFreeGen(N,minority,exp,h,intentions):
+@profile
+def ScaleFreeGen(N,exp,h,intentions):  #custom strogatz paper algorithm implemented
     degsOrig = powerlawGen(exp, N)**(-1)
     degs = np.round(degsOrig).astype(int)
     """#checking prob distribution
@@ -29,26 +29,30 @@ def ScaleFreeGen(N,minority,exp,h,intentions):
     """
     G = nx.Graph()
     G.add_nodes_from(range(N))
-    #random.shuffle(intentions)  # removable
     majstack = []
     minstack = []
+    minlen=0
     for i in range(N):
         for j in range(degs[i]):
             if intentions[i] == 0:
                 minstack.append(i)
+                minlen+=1
             elif intentions[i] == 1:
                 majstack.append(i)
     random.shuffle(minstack)
     random.shuffle(majstack)
-
+    hConnProb=np.random.random(minlen) #tiri casuali, uno per ogni arco da un nodo minoritario, lo connette con
+                          #un altro di minoranza con probabilità h, generati prima perché numpy ottimizzato su vettori
+    id=0
     while len(minstack) > 0:
         node1 = minstack.pop()
-        if np.random.random() <= h:
+        if hConnProb[id] <= h:
             if len(minstack) != 0:
                 G.add_edge(node1, minstack.pop())
         else:
             if len(majstack) != 0:
                 G.add_edge(node1, majstack.pop())
+        id+=1
 
     while len(majstack) > 1:
         node1 = majstack.pop()
@@ -66,7 +70,7 @@ def ScaleFreeGen(N,minority,exp,h,intentions):
     """
     return G
 
-def expPerformer(N,minority,exp,h,intentions,nexp):
+def expPerformer(N,exp,h,intentions,nexp):
     minwin=0
     for i in range(0, nexp):
 
@@ -90,7 +94,6 @@ def expPerformer(N,minority,exp,h,intentions,nexp):
 
 def main():
     N=100
-    minority=20
     exp=2.5
 
     step = 0.01
@@ -100,7 +103,6 @@ def main():
 
 
     fig, axs = plt.subplots(nrows=1, ncols=3, sharex=False, sharey=False)
-    #ax=fig.add_subplot(111)
     axs[1].set_xlabel("h")
     axs[0].set_ylabel("Probability of minority winning")
     col=0
@@ -114,7 +116,7 @@ def main():
 
             numWorkers = multiprocessing.cpu_count()
             with concurrent.futures.ThreadPoolExecutor(max_workers=numWorkers) as executor:
-                futures = [executor.submit(expPerformer,N,minority,exp,h,intentions, int(nexp / numWorkers)) for i in range(numWorkers)]
+                futures = [executor.submit(expPerformer,N,exp,h,intentions, int(nexp / numWorkers)) for i in range(numWorkers)]
                 for future in concurrent.futures.as_completed(futures):
                     minwin += future.result()
 
@@ -122,7 +124,7 @@ def main():
             print("Probabilità di vittoria: ", prob[id], "con h grafo: ", h)
             id += 1
         title='('+string.ascii_letters[col]+') N\u208B='+str(minority)+'%'
-        #plt.subplot(1,3,col)
+        axs[col].set_ylim(0,1)
         axs[col].title.set_text(title)
         axs[col].plot(hvalues, prob)
         col+=1
