@@ -3,6 +3,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import concurrent.futures
 import scipy.interpolate
+import string
+import multiprocessing
+import random
 
 #@profile
 def expPerformer(pin,pout,minority, nexp,L2,N):
@@ -32,41 +35,58 @@ def expPerformer(pin,pout,minority, nexp,L2,N):
     return minwin
 
 def main():
-    N = 100     #number of nodes
-    minority = 20   #N- in the paper
+    N = 20     #number of nodes
+    minority = 6   #N- in the paper
     L2 = np.ndarray.tolist(np.zeros((1, minority)))[0]
     L2 = L2 + np.ndarray.tolist(np.ones((1, N - minority)))[0]  # intentions of vote
 
-    step = 0.005
+    step = 0.01
     nexp = 10
     matdim=int(1 / step)+1
-    prob = np.empty((matdim,matdim))
+    #prob = np.zeros((matdim,matdim))
     pvalues = np.arange(0.0, 1.0+step, step)
-    idin = 0
+    #idin = 0
 
-    for pin in pvalues:       #prob within communities, x axis
-        idout=0
-        for pout in pvalues:  #prob between communities, y axis
-            minwin = 0
+    fig, axs = plt.subplots(nrows=1, ncols=3, sharex=False, sharey=False)
+    plt.rcParams.update({'mathtext.default': 'regular'})
+    axs[1].set_xlabel('$p_{in}$')
+    axs[0].set_ylabel('$p_{out}$')
+    col = 0
 
-            numWorkers =1 # multiprocessing.cpu_count()
-            with concurrent.futures.ThreadPoolExecutor(max_workers=numWorkers) as executor:
-                futures = [executor.submit(expPerformer, pin,pout,minority, int(nexp / numWorkers),L2,N) for i in range(numWorkers)]
-                for future in concurrent.futures.as_completed(futures):
-                    minwin += future.result()
+    for minority in [20, 30, 40]:
+        L2=np.ndarray.tolist(np.zeros((1,minority)))[0]
+        L2=L2+np.ndarray.tolist(np.ones((1,N-minority)))[0] #intention of vote
+        idin=0
+        prob = np.zeros((matdim,matdim))
+        for pin in pvalues:       #prob within communities, x axis
+            idout=0
+            for pout in pvalues[0:idin+10]:  #prob between communities, y axis
+                minwin = 0
+                numWorkers =multiprocessing.cpu_count()
+                with concurrent.futures.ThreadPoolExecutor(max_workers=numWorkers) as executor:
+                    futures = [executor.submit(expPerformer, pin,pout,minority, int(nexp / numWorkers),L2,N) for i in range(numWorkers)]
+                    for future in concurrent.futures.as_completed(futures):
+                        minwin += future.result()
 
-            prob[idin,idout] = minwin / nexp
-            print("Probabilità di vittoria: ", prob[idin,idout], "con pin e pout grafo: ", pin,pout)
-            idout +=1
-        idin += 1
-    points=np.transpose([np.tile(pvalues, matdim), np.repeat(pvalues, matdim)])
-    plt.scatter(points[:,1],points[:,0],c=prob)
+                prob[idin,idout] = minwin / nexp
+                #print("Probabilità di vittoria: ", prob[idin,idout], "con pin e pout grafo: ", pin,pout)
+                idout +=1
+            idin += 1
+        title = '(' + string.ascii_letters[col] + ') N\u208B=' + str(minority) + '%'
+        axs[col].title.set_text(title)
+        points = np.transpose([np.tile(pvalues, matdim), np.repeat(pvalues, matdim)])
+        #plt.scatter(points[:, 1], points[:, 0], c=prob)
+        print("shapes= ",points.shape,prob.shape)
+        axs[col].scatter(points[:, 1], points[:, 0], c=prob.flatten())
+        col += 1
+    plt.colorbar()
     plt.show()
+    """
     grid_x, grid_y = np.mgrid[0:1:(10/step)*1j,0:1:(10/step)*1j]
     probflat = np.reshape(prob, (matdim * matdim, 1))
     grid=scipy.interpolate.griddata(points, probflat, (grid_x,grid_y), method='linear')
     plt.imshow(grid, origin='lower', extent=(0,1,0,1))
     plt.show()
-
+    """
 if __name__=='__main__':
     main()

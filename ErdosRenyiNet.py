@@ -49,8 +49,8 @@ if __name__ == '__main__':
     N=100
     
     step=0.02
-    nexp=1000
-    #prob=np.zeros(int(1/step)+1)      #minority victory probability, vector to be filled
+    nexp=20000
+    prob=np.zeros(int(1/step)+1)      #minority victory probability, vector to be filled
     pvalues=np.arange(0.0,1+step,step)
 
     fig, axs = plt.subplots(nrows=1, ncols=3, sharex=False, sharey=False)
@@ -64,9 +64,7 @@ if __name__ == '__main__':
         L1=range(0,N)        #node numbers
         L2=np.ndarray.tolist(np.zeros((1,minority)))[0]
         L2=L2+np.ndarray.tolist(np.ones((1,N-minority)))[0] #intention of vote
-        prob = np.zeros(int(1 / step) + 1)
         id=0
-        zeroCnt=0
         for p in pvalues:
             minwin=0
 
@@ -78,12 +76,6 @@ if __name__ == '__main__':
 
             #expPerformer(p,nexp) #not parallelized version
             prob[id]=minwin/nexp
-            if prob[id]==0:
-                zeroCnt+=1
-            else:
-                zeroCnt=0
-            if zeroCnt==5:
-                break
             print("Probabilità di vittoria: ",prob[id],"con p grafo: ",p)
             id+=1
         title = '(' + string.ascii_letters[col] + ') N\u208B=' + str(minority) + '%'
@@ -93,4 +85,5 @@ if __name__ == '__main__':
         col += 1
     end = time.time()
     print("Duration: ", end - start)
+    plt.savefig("ErdosRenyi.eps",format='eps')
     plt.show()
