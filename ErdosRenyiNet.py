@@ -1,4 +1,4 @@
-import random
+#import random
 import time
 import networkx as nx
 import matplotlib.pyplot as plt
@@ -6,14 +6,14 @@ import numpy as np
 import multiprocessing
 from multiprocessing import Process,Value
 import concurrent.futures
+import string
 
 minwin=0
 #@profile
 def expPerformer(p, nexp):
-    #print("Avanti!")
     minwin=0
     for i in range(0, nexp):
-        random.shuffle(L2)  # shuffle intentions
+        #random.shuffle(L2)  # shuffle intentions
         #intentions = dict(zip(L1, L2))  # radomly assigning intentions to graph nodes
         G = nx.generators.erdos_renyi_graph(N, p)
         #nx.set_node_attributes(G, intentions, "intentions")
@@ -52,27 +52,38 @@ if __name__ == '__main__':
     L2=np.ndarray.tolist(np.zeros((1,minority)))[0]
     L2=L2+np.ndarray.tolist(np.ones((1,N-minority)))[0] #intention of vote
 
-    step=0.005
-    nexp=4000
-    prob=np.zeros(int(1/step))      #minority victory probability, vector to be filled
-    pvalues=np.arange(0.0,1,step)
-    id=0
+    step=0.02
+    nexp=10000
+    prob=np.zeros(int(1/step)+1)      #minority victory probability, vector to be filled
+    pvalues=np.arange(0.0,1+step,step)
+
+    fig, axs = plt.subplots(nrows=1, ncols=3, sharex=False, sharey=False)
+    axs[1].set_xlabel("p")
+    axs[0].set_ylabel("Probability of minority winning")
+    col = 0
+
 
     start = time.time()
-    for p in pvalues:
-        minwin=0
+    for minority in [20, 30, 40]:
+        id=0
+        for p in pvalues:
+            minwin=0
 
-        numWorkers=multiprocessing.cpu_count()
-        with concurrent.futures.ThreadPoolExecutor(max_workers=numWorkers) as executor:
-            futures = [executor.submit(expPerformer, p,int(nexp/numWorkers)) for i in range(numWorkers)]
-            for future in concurrent.futures.as_completed(futures):
-                minwin+=future.result()
+            numWorkers=multiprocessing.cpu_count()
+            with concurrent.futures.ThreadPoolExecutor(max_workers=numWorkers) as executor:
+                futures = [executor.submit(expPerformer, p,int(nexp/numWorkers)) for i in range(numWorkers)]
+                for future in concurrent.futures.as_completed(futures):
+                    minwin+=future.result()
 
-        #expPerformer(p,nexp) #not parallelized version
-        prob[id]=minwin/nexp
-        print("Probabilità di vittoria: ",prob[id],"con p grafo: ",p)
-        id+=1
+            #expPerformer(p,nexp) #not parallelized version
+            prob[id]=minwin/nexp
+            print("Probabilità di vittoria: ",prob[id],"con p grafo: ",p)
+            id+=1
+        title = '(' + string.ascii_letters[col] + ') N\u208B=' + str(minority) + '%'
+        axs[col].set_ylim(0, 0.5)
+        axs[col].title.set_text(title)
+        axs[col].plot(pvalues, prob)
+        col += 1
     end = time.time()
     print("Duration: ", end - start)
-    plt.plot(pvalues,prob)
     plt.show()
