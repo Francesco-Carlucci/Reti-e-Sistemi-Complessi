@@ -47,14 +47,10 @@ def expPerformer(p, nexp):
 
 if __name__ == '__main__':
     N=100
-    minority=20
-    L1=range(0,N)        #node numbers
-    L2=np.ndarray.tolist(np.zeros((1,minority)))[0]
-    L2=L2+np.ndarray.tolist(np.ones((1,N-minority)))[0] #intention of vote
-
+    
     step=0.02
-    nexp=10000
-    prob=np.zeros(int(1/step)+1)      #minority victory probability, vector to be filled
+    nexp=1000
+    #prob=np.zeros(int(1/step)+1)      #minority victory probability, vector to be filled
     pvalues=np.arange(0.0,1+step,step)
 
     fig, axs = plt.subplots(nrows=1, ncols=3, sharex=False, sharey=False)
@@ -65,7 +61,12 @@ if __name__ == '__main__':
 
     start = time.time()
     for minority in [20, 30, 40]:
+        L1=range(0,N)        #node numbers
+        L2=np.ndarray.tolist(np.zeros((1,minority)))[0]
+        L2=L2+np.ndarray.tolist(np.ones((1,N-minority)))[0] #intention of vote
+        prob = np.zeros(int(1 / step) + 1)
         id=0
+        zeroCnt=0
         for p in pvalues:
             minwin=0
 
@@ -77,6 +78,12 @@ if __name__ == '__main__':
 
             #expPerformer(p,nexp) #not parallelized version
             prob[id]=minwin/nexp
+            if prob[id]==0:
+                zeroCnt+=1
+            else:
+                zeroCnt=0
+            if zeroCnt==5:
+                break
             print("Probabilità di vittoria: ",prob[id],"con p grafo: ",p)
             id+=1
         title = '(' + string.ascii_letters[col] + ') N\u208B=' + str(minority) + '%'
