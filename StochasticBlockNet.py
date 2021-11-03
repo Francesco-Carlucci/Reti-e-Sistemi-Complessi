@@ -6,6 +6,7 @@ import scipy.interpolate
 import string
 import multiprocessing
 import random
+import pickle
 
 #@profile
 def expPerformer(pin,pout,minority, nexp,L2,N):
@@ -35,17 +36,15 @@ def expPerformer(pin,pout,minority, nexp,L2,N):
     return minwin
 
 def main():
-    N = 20     #number of nodes
-    minority = 6   #N- in the paper
-    L2 = np.ndarray.tolist(np.zeros((1, minority)))[0]
-    L2 = L2 + np.ndarray.tolist(np.ones((1, N - minority)))[0]  # intentions of vote
-
-    step = 0.01
-    nexp = 10
+    N = 100     #number of nodes
+    step = 0.1
+    nexp = 1
     matdim=int(1 / step)+1
     #prob = np.zeros((matdim,matdim))
     pvalues = np.arange(0.0, 1.0+step, step)
     #idin = 0
+
+    log = open('probvalues.txt', 'wb')
 
     fig, axs = plt.subplots(nrows=1, ncols=3, sharex=False, sharey=False)
     plt.rcParams.update({'mathtext.default': 'regular'})
@@ -76,11 +75,15 @@ def main():
         axs[col].title.set_text(title)
         points = np.transpose([np.tile(pvalues, matdim), np.repeat(pvalues, matdim)])
         #plt.scatter(points[:, 1], points[:, 0], c=prob)
-        print("shapes= ",points.shape,prob.shape)
-        axs[col].scatter(points[:, 1], points[:, 0], c=prob.flatten())
+
+        pickle.dump(prob,log)
+
+        sc=axs[col].scatter(points[:, 1], points[:, 0], c=prob.flatten()) #flatten needed to run on jupyter (different matplotlib version)
         col += 1
-    plt.colorbar()
+    plt.savefig("StochasticBlock_3.eps",format='eps')
+    plt.colorbar(sc)
     plt.show()
+    log.close()
     """
     grid_x, grid_y = np.mgrid[0:1:(10/step)*1j,0:1:(10/step)*1j]
     probflat = np.reshape(prob, (matdim * matdim, 1))
