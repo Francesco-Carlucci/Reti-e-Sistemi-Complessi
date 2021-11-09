@@ -35,8 +35,8 @@ def TheoricFunc(poutVet,min,maj):
     return res
 
 def main():
-    #N = 100     #number of nodes
-    alfa=2/3
+    N = 10     #number of nodes
+    #alfa=2/10
     step = 0.01
     nexp = 10000
     matdim=int(1 / step)+1
@@ -44,9 +44,10 @@ def main():
     print(prob.shape)
     pvalues = np.arange(0.0, 1.0+step, step)
     pin=1
+    id=0
 
-    for N in [5,10,20,100]:
-        minority=int((alfa/(1+alfa))*N)
+    for minority in [2,3,4]:  #usare alfa per adattarsi a differenti N
+        #minority=int((alfa/(1+alfa))*N)
         idout = 0
         L2 = np.ndarray.tolist(np.zeros((1, minority)))[0]
         L2 = L2 + np.ndarray.tolist(np.ones((1, N - minority)))[0]  # intentions of vote
@@ -62,21 +63,23 @@ def main():
             prob[idout] = minwin / nexp
             print("Probabilità di vittoria: ", prob[idout], "con pin e pout grafo: ", pin,pout)
             idout +=1
-
-        if N==5:
-            plt.plot(pvalues, prob, linewidth=2,color='blue')
-            plt.plot(pvalues, TheoricFunc(pvalues,minority,N-minority),'b--',linewidth=0.5)
-        elif N==10:
+        np.savetxt("probvalues_b.csv", prob, delimiter=",")
+        colors=['blue','purple','orange']
+        #if minority==2:
+        plt.plot(pvalues, prob, linewidth=2,color=colors[id])
+        plt.plot(pvalues, TheoricFunc(pvalues,minority,N-minority),'b--',linewidth=0.5)
+        id+=1
+        """
+        elif minority==3:
             plt.plot(pvalues, prob, linewidth=2, color='purple')
             plt.plot(pvalues, TheoricFunc(pvalues, minority, N - minority), 'b--',linewidth=0.5)
-        elif N==20:
+        elif minority==4:
             plt.plot(pvalues, prob, linewidth=2, color='orange')
             plt.plot(pvalues, TheoricFunc(pvalues, minority, N - minority), 'b--',linewidth=0.5)
-        else:
-            plt.plot(pvalues, prob, linewidth=2, color='yellow')
-            plt.plot(pvalues, TheoricFunc(pvalues, minority, N - minority), 'b--',linewidth=0.5)
-    plt.xlabel("Probability of minority winning")
-    plt.ylabel("P_{out}")
+        """
+    plt.rcParams.update({'mathtext.default': 'regular'}) #use latex like input in matplot labels
+    plt.ylabel("Probability of minority winning")
+    plt.xlabel('$p_{out}$')
     plt.show()
 
 if __name__=='__main__':

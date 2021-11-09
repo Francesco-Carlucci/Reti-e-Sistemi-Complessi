@@ -8,7 +8,7 @@ import multiprocessing
 import random
 import pickle
 
-#@profile
+#@profile #used to speed up graph generation and neighbour polling, comment if running
 def expPerformer(pin,pout,minority, nexp,L2,N):
     minwin=0
     for i in range(0, nexp):
@@ -37,14 +37,14 @@ def expPerformer(pin,pout,minority, nexp,L2,N):
 
 def main():
     N = 100     #number of nodes
-    step = 0.1
-    nexp = 1
+    step = 0.01
+    nexp = 100
     matdim=int(1 / step)+1
     #prob = np.zeros((matdim,matdim))
     pvalues = np.arange(0.0, 1.0+step, step)
     #idin = 0
 
-    log = open('probvalues.txt', 'wb')
+    log = open('probvaluesSliced.txt', 'wb')
 
     fig, axs = plt.subplots(nrows=1, ncols=3, sharex=False, sharey=False)
     plt.rcParams.update({'mathtext.default': 'regular'})
@@ -77,11 +77,13 @@ def main():
         #plt.scatter(points[:, 1], points[:, 0], c=prob)
 
         pickle.dump(prob,log)
+        np.savetxt("probvaluesSliced.csv", prob, delimiter=",")
 
         sc=axs[col].scatter(points[:, 1], points[:, 0], c=prob.flatten()) #flatten needed to run on jupyter (different matplotlib version)
         col += 1
-    plt.savefig("StochasticBlock_3.eps",format='eps')
     plt.colorbar(sc)
+    plt.savefig("StochasticBlock_toSlice.eps",format='eps')
+
     plt.show()
     log.close()
     """

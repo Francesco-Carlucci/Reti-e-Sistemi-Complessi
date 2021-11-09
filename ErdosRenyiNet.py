@@ -4,7 +4,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import numpy as np
 import multiprocessing
-from multiprocessing import Process,Value
+#from multiprocessing import Process,Value
 import concurrent.futures
 import string
 

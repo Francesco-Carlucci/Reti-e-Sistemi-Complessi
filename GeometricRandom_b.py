@@ -31,7 +31,7 @@ def GeomRandGen(N,h,r,intentions):
     G=nx.Graph()
     G.add_nodes_from(range(N))
     G.add_edges_from(pairs)
-    #G=nx.random_geometric_graph(N, r,pos=pos) #library function, too slow
+    #G=nx.random_geometric_graph(N, r,pos=pos)
     """
     colorMap = []  # color graph nodes according to their vote intention and draw the graph
     for i in intentions:
@@ -79,30 +79,33 @@ def main():
     print("numero esperimenti: ",nexp)
     matdim=int(1 / step)+1
     prob = np.empty(matdim)
-    rvalues = np.arange(0.0, 1.0+step, step)
+    hvalues = np.arange(0.5, 1.0+step/2, step/2)
+    print(matdim,hvalues.shape)
 
     fig, axs = plt.subplots(nrows=1, ncols=3, sharex=False, sharey=False)
-    axs[1].set_xlabel("r")
+    axs[1].set_xlabel("h")
     axs[0].set_ylabel("Probability of minority winning")
     col = 0
 
-    for h in [0.5, 0.75, 1]:  #values of h below 0.5 behave simmetrically 0:high homophily->0.5: no homophily
+    for r in [0.2, 0.5, 0.7]:  #values of h below 0.5 behave simmetrically 0:high homophily->0.5: no homophily
         id = 0
-        for r in rvalues:
+        for h in hvalues:
             minwin = 0
+
             numWorkers = multiprocessing.cpu_count()
             with concurrent.futures.ThreadPoolExecutor(max_workers=numWorkers) as executor:
                 futures = [executor.submit(expPerformer, N, h, r, intentions, int(nexp / numWorkers)) for i
                            in range(numWorkers)]
                 for future in concurrent.futures.as_completed(futures):
                     minwin += future.result()
+
             prob[id] = minwin / nexp
-            print("Probabilità di vittoria: ", prob[id], "con r grafo: ", r)
+            print("Probabilità di vittoria: ", prob[id], "con h grafo: ", h)
             id += 1
-        title = '(' + string.ascii_letters[col] + ') h=' + str(h)
+        title = '(' + string.ascii_letters[col] + ') r=' + str(r)
         axs[col].set_ylim(0, 1)
         axs[col].title.set_text(title)
-        axs[col].plot(rvalues, prob)
+        axs[col].plot(hvalues, prob)
         col += 1
     plt.show()
 

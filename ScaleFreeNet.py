@@ -10,15 +10,15 @@ import concurrent.futures
 import multiprocessing
 
 def powerlawGen(exp,size):
-    return np.random.power(exp+1,size)/exp
+    return (np.random.power(exp+1,size)/exp)**(-1)
 
 def powerlawGen2(exp,size):
     p=np.random.random(size)
     x=p**(-1./exp)
     return x
-@profile
+#@profile
 def ScaleFreeGen(N,exp,h,intentions):  #custom strogatz paper algorithm implemented
-    degsOrig = powerlawGen(exp, N)**(-1)
+    degsOrig = powerlawGen(exp, N)
     degs = np.round(degsOrig).astype(int)
     """#checking prob distribution
     plt.hist(degsOrig)
@@ -74,12 +74,13 @@ def expPerformer(N,exp,h,intentions,nexp):
     minwin=0
     for i in range(0, nexp):
 
-        G = ScaleFreeGen(N,minority,exp,h,intentions)
+        G = ScaleFreeGen(N,exp,h,intentions)
 
         vote = [0, 0]  # array of vote counter: 0 is minority, 1 is majority
 
         for i in range(0, N):
             neighb = G.neighbors(i)  # iterator on the neighbor
+
             vet = [intentions[n] for n in neighb]  # extract neighbor intentions
             maj = sum(vet)  # sum of 1 and 0 equals the number of majority voters in the neighborhood
             min = len(vet) - maj  # len(vet) is the number of neighbor
@@ -93,7 +94,7 @@ def expPerformer(N,exp,h,intentions,nexp):
     return minwin
 
 def main():
-    N=100
+    N=10
     exp=2.5
 
     step = 0.01
@@ -101,20 +102,32 @@ def main():
     prob = np.zeros(int(1 / step)+1)  # minority victory probability, vector to be filled
     hvalues = np.arange(0.0, 1+step, step)
 
-
+    """# checking prob distribution
+    bins=100
+    degsOrig = powerlawGen2(exp, N)
+    degs = np.round(degsOrig).astype(int)
+    print(np.min(degsOrig),np.max(degsOrig))
+    thRule=np.arange(np.min(degsOrig),np.max(degsOrig)+1,1/bins)**(-exp)
+    plt.plot(np.arange(np.min(degsOrig),np.max(degsOrig)+1,1/bins),thRule)#plt.hist(degs,bins)
+    n,b,_=plt.hist(degsOrig,bins,density=True)
+    print(n,b)
+    print("media inversi: ", np.mean(degsOrig))
+    print("media interi: ", np.mean(degs))
+    plt.show()
+    """
     fig, axs = plt.subplots(nrows=1, ncols=3, sharex=False, sharey=False)
     axs[1].set_xlabel("h")
     axs[0].set_ylabel("Probability of minority winning")
     col=0
 
-    for minority in [20, 30, 40]:
+    for minority in [2, 3, 4]:
         intentions = np.ndarray.tolist(np.zeros((1, minority)))[0] \
                      + np.ndarray.tolist(np.ones((1, N - minority)))[0]  # vote intentions
         id=0
         for h in hvalues:
             minwin = 0
 
-            numWorkers = multiprocessing.cpu_count()
+            numWorkers =1# multiprocessing.cpu_count()
             with concurrent.futures.ThreadPoolExecutor(max_workers=numWorkers) as executor:
                 futures = [executor.submit(expPerformer,N,exp,h,intentions, int(nexp / numWorkers)) for i in range(numWorkers)]
                 for future in concurrent.futures.as_completed(futures):

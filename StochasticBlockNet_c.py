@@ -46,7 +46,12 @@ def main():
     pin=1
 
     for N in [5,10,20,100]:
+        if N==5:
+            nexp=1000000
+        else:
+            nexp=10000
         minority=int((alfa/(1+alfa))*N)
+        print(minority)
         idout = 0
         L2 = np.ndarray.tolist(np.zeros((1, minority)))[0]
         L2 = L2 + np.ndarray.tolist(np.ones((1, N - minority)))[0]  # intentions of vote
